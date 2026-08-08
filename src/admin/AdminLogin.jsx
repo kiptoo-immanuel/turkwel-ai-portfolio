@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Lock, Mail, ShieldCheck, ArrowRight, Info, CheckCircle2, Sun, Moon } from 'lucide-react';
+import { Lock, Mail, ShieldCheck, ArrowRight, Sun, Moon } from 'lucide-react';
 import { getApiUrl } from '../config/api';
 
 export default function AdminLogin({ onLoginSuccess, theme, onToggleTheme }) {
-  const [email, setEmail] = useState('admin@bimaxisgroup.com');
-  const [password, setPassword] = useState('AdminBIMAXIS2026!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -15,6 +15,12 @@ export default function AdminLogin({ onLoginSuccess, theme, onToggleTheme }) {
 
     const cleanEmail = email.trim().toLowerCase();
     const cleanPassword = password.trim();
+
+    if (!cleanEmail || !cleanPassword) {
+      setError('Please enter your administrator email and password.');
+      setLoading(false);
+      return;
+    }
 
     // Check credentials against standard admin list
     const validEmails = ['admin@bimaxisgroup.com', 'mannykiptoo@gmail.com', 'admin'];
@@ -47,7 +53,7 @@ export default function AdminLogin({ onLoginSuccess, theme, onToggleTheme }) {
       console.warn('[Admin Auth] API fetch error or static host environment:', err);
     }
 
-    // Static host fallback (e.g. GitHub Pages static site)
+    // Static host fallback (e.g. GitHub Pages / Vercel static fallback)
     if (isValidAdminCreds) {
       const dummyToken = 'demo_admin_jwt_token_2026';
       const dummyUser = {
@@ -61,19 +67,6 @@ export default function AdminLogin({ onLoginSuccess, theme, onToggleTheme }) {
       setError('Invalid administrator password or email.');
       setLoading(false);
     }
-  };
-
-  const handleQuickDemoLogin = () => {
-    setEmail('admin@bimaxisgroup.com');
-    setPassword('AdminBIMAXIS2026!');
-    const dummyToken = 'demo_admin_jwt_token_2026';
-    const dummyUser = {
-      name: 'Emmanuel Kiptoo, PE',
-      email: 'admin@bimaxisgroup.com',
-      role: 'admin',
-    };
-    localStorage.setItem('admin_token', dummyToken);
-    onLoginSuccess(dummyUser, dummyToken);
   };
 
   return (
@@ -107,10 +100,11 @@ export default function AdminLogin({ onLoginSuccess, theme, onToggleTheme }) {
         className="glass-panel"
         style={{
           width: '100%',
-          maxWidth: '460px',
-          padding: '40px',
+          maxWidth: '440px',
+          padding: '40px 36px',
           border: '1px solid var(--border-glow)',
           boxShadow: 'var(--glass-shadow)',
+          borderRadius: '16px',
         }}
       >
         {/* Brand Header */}
@@ -131,11 +125,11 @@ export default function AdminLogin({ onLoginSuccess, theme, onToggleTheme }) {
           >
             <ShieldCheck size={30} color="var(--accent-cyan)" />
           </div>
-          <h2 style={{ fontSize: '1.75rem', marginBottom: '6px' }}>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '6px' }}>
             BIMAXIS<span style={{ color: 'var(--accent-cyan)' }}>Group</span>
           </h2>
-          <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
-            Administrator Portal
+          <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
+            Administrator Portal Sign-In
           </div>
         </div>
 
@@ -150,6 +144,7 @@ export default function AdminLogin({ onLoginSuccess, theme, onToggleTheme }) {
               fontSize: '0.88rem',
               marginBottom: '24px',
               lineHeight: 1.5,
+              fontWeight: 500,
             }}
           >
             {error}
@@ -163,18 +158,19 @@ export default function AdminLogin({ onLoginSuccess, theme, onToggleTheme }) {
             </label>
             <div style={{ position: 'relative' }}>
               <input
-                type="text"
+                type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@bimaxisgroup.com or mannykiptoo@gmail.com"
+                placeholder="Enter your administrator email"
+                autoComplete="username"
                 style={{
                   width: '100%',
                   padding: '12px 16px 12px 42px',
                   borderRadius: '8px',
                   background: 'var(--bg-input)',
                   border: '1px solid var(--border-subtle)',
-                  color: '#FFF',
+                  color: 'var(--text-primary)',
                   fontSize: '0.95rem',
                 }}
               />
@@ -192,14 +188,15 @@ export default function AdminLogin({ onLoginSuccess, theme, onToggleTheme }) {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
+                placeholder="Enter your password"
+                autoComplete="current-password"
                 style={{
                   width: '100%',
                   padding: '12px 16px 12px 42px',
                   borderRadius: '8px',
                   background: 'var(--bg-input)',
                   border: '1px solid var(--border-subtle)',
-                  color: '#FFF',
+                  color: 'var(--text-primary)',
                   fontSize: '0.95rem',
                 }}
               />
@@ -211,37 +208,14 @@ export default function AdminLogin({ onLoginSuccess, theme, onToggleTheme }) {
             type="submit"
             disabled={loading}
             className="btn btn-primary"
-            style={{ padding: '14px', fontSize: '1rem', marginTop: '10px', width: '100%' }}
+            style={{ padding: '14px', fontSize: '1rem', marginTop: '10px', width: '100%', fontWeight: 700 }}
           >
             <span>{loading ? 'Authenticating Session...' : 'Log In to Administrator Portal'}</span>
             <ArrowRight size={18} />
           </button>
-
-          {/* Quick One-Click Demo Access Button */}
-          <button
-            type="button"
-            onClick={handleQuickDemoLogin}
-            className="btn btn-secondary"
-            style={{
-              padding: '12px',
-              fontSize: '0.88rem',
-              width: '100%',
-              borderColor: 'rgba(56, 189, 248, 0.4)',
-              color: 'var(--accent-cyan)',
-              background: 'rgba(56, 189, 248, 0.08)',
-            }}
-          >
-            <CheckCircle2 size={16} />
-            <span>One-Click Quick Admin Entry</span>
-          </button>
-
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: '8px', lineHeight: 1.5 }}>
-            Valid Emails: <strong style={{ color: '#FFF' }}>admin@bimaxisgroup.com</strong> or <strong style={{ color: '#FFF' }}>mannykiptoo@gmail.com</strong>
-            <br />
-            Password: <strong style={{ color: 'var(--accent-teal)' }}>AdminBIMAXIS2026!</strong>
-          </div>
         </form>
       </div>
     </div>
   );
 }
+
