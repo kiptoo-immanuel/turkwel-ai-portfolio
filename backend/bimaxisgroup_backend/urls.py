@@ -1,0 +1,22 @@
+from django.contrib import admin
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+from django.http import JsonResponse
+
+def health_check(request):
+    return JsonResponse({
+        'status': 'ok',
+        'service': 'BIMAXISGroup Django REST API & Database Backend',
+        'engine': 'Python / Django 6.1'
+    })
+
+urlpatterns = [
+    path('django-admin/', admin.site.urls),
+    path('api/health', health_check),
+    path('api/health/', health_check),
+    path('api/', include('api.urls')),
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
