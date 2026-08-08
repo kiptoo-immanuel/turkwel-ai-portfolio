@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Cpu, Menu, X, ArrowRight, Sun, Moon, FileText } from 'lucide-react';
+import { Cpu, Menu, X, ArrowRight, Sun, Moon } from 'lucide-react';
 
 export default function Navbar({ onOpenProposal, theme, onToggleTheme }) {
   const [scrolled, setScrolled] = useState(false);
@@ -123,7 +123,7 @@ export default function Navbar({ onOpenProposal, theme, onToggleTheme }) {
         </nav>
 
         {/* Header Right Action Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
           
           {/* Light / Dark Mode Switcher */}
           <button
@@ -136,29 +136,32 @@ export default function Navbar({ onOpenProposal, theme, onToggleTheme }) {
             {theme === 'dark' ? <Sun size={16} color="var(--accent-amber)" /> : <Moon size={16} color="var(--accent-purple)" />}
           </button>
 
-          {/* Perfectly Scaled, Non-Obstructive Request Proposal Button */}
+          {/* Stylish Clickable Request Proposal Link with Animated Arrow */}
           <button
             onClick={onOpenProposal}
-            className="btn btn-primary header-proposal-btn"
+            className="header-proposal-link"
+            aria-label="Request Proposal"
             style={{
-              padding: '7px 14px',
-              fontSize: '0.82rem',
-              fontWeight: 700,
-              borderRadius: '8px',
+              background: 'transparent',
+              border: '1px solid var(--border-subtle)',
+              color: 'var(--text-primary)',
+              padding: '6px 14px',
+              fontSize: '0.86rem',
+              fontWeight: 600,
+              borderRadius: '20px',
               whiteSpace: 'nowrap',
               flexShrink: 0,
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '5px',
-              lineHeight: 1,
-              boxShadow: '0 2px 10px rgba(56, 189, 248, 0.3)',
+              gap: '6px',
               cursor: 'pointer',
+              transition: 'all 0.25s ease',
             }}
           >
-            <FileText size={14} style={{ flexShrink: 0 }} />
             <span className="proposal-text-full">Request Proposal</span>
             <span className="proposal-text-short" style={{ display: 'none' }}>Proposal</span>
+            <ArrowRight size={15} className="proposal-arrow" style={{ color: 'var(--accent-cyan)', transition: 'transform 0.25s ease' }} />
           </button>
 
           {/* Mobile Drawer Hamburger Icon */}
@@ -247,31 +250,55 @@ export default function Navbar({ onOpenProposal, theme, onToggleTheme }) {
             ROI Estimator
           </a>
 
-          {/* Full-Width Mobile Drawer Proposal CTA */}
+          {/* Full-Width Mobile Drawer Proposal Link */}
           <button
             onClick={() => {
               setMobileMenuOpen(false);
               onOpenProposal();
             }}
-            className="btn btn-primary"
-            style={{ width: '100%', padding: '12px', marginTop: '4px', fontSize: '0.95rem', display: 'flex', justifyContent: 'center', gap: '8px' }}
+            className="header-proposal-link"
+            style={{
+              width: '100%',
+              padding: '12px',
+              marginTop: '4px',
+              fontSize: '0.95rem',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              background: 'transparent',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '10px',
+              color: 'var(--text-primary)',
+              cursor: 'pointer',
+              transition: 'all 0.25s ease',
+            }}
           >
-            <FileText size={16} />
             <span>Request Custom Proposal</span>
-            <ArrowRight size={16} />
+            <ArrowRight size={16} className="proposal-arrow" style={{ color: 'var(--accent-cyan)' }} />
           </button>
         </div>
       )}
 
       <style>{`
+        .header-proposal-link:hover {
+          border-color: var(--accent-cyan) !important;
+          color: var(--accent-cyan) !important;
+          background: rgba(56, 189, 248, 0.08) !important;
+          box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+        }
+        .header-proposal-link:hover .proposal-arrow {
+          transform: translateX(4px) !important;
+        }
         @media (max-width: 992px) {
           .desktop-nav { display: none !important; }
           .mobile-toggle-icon { display: flex !important; }
         }
         @media (max-width: 640px) {
           .brand-subtitle { display: none !important; }
-          .header-proposal-btn {
-            padding: 6px 10px !important;
+          .header-proposal-link {
+            padding: 5px 10px !important;
             font-size: 0.78rem !important;
           }
         }
