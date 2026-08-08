@@ -47,37 +47,45 @@ broadcaster = VisitorStreamBroadcaster()
 
 def get_latest_dashboard_stats():
     """
-    Calculates live dashboard metrics strictly from Python ORM queries.
-    Automatically resets daily count at midnight.
+    Calculates live dashboard metrics strictly from Python ORM queries and MongoDB.
+    - All-time page views and unique visitors NEVER reset.
+    - Period metrics (today, week, month) reset automatically per time window.
     """
-    from .models import TeamMember, AIAgent, Model3D, VisitorAnalytics
+    from .models import TeamMember, AIAgent, Model3D, VisitorAnalytics, GlobalAnalyticsCounter
+    from .db_mongo import get_mongo_db
     from django.db.models import Count
+    from django.utils import timezone
+    from datetime import datetime, timedelta
 
     now = timezone.now()
     start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
     start_of_week = start_of_day - timedelta(days=now.weekday())
     start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    total_visitors = VisitorAnalytics.objects.count()
-    visitors_today = VisitorAnalytics.objects.filter(timestamp__gte=start_of_day).count()
-    visitors_week = VisitorAnalytics.objects.filter(timestamp__gte=start_of_week).count()
-    visitors_month = VisitorAnalytics.objects.filter(timestamp__gte=start_of_month).count()
+    # 1. Fetch or initialize persistent All-Time Counter (NEVER RESETS)
+    counter, _ = GlobalAnalyticsCounter.objects.get_or_create(id=1)
+    
+    # Sync with actual VisitorAnalytics DB total if table has more records
+    total_db_records = VisitorAnalytics.objects.count()
+    if total_db_records > counter.all_time_page_views:
+        counter.all_time_page_views = total_db_records
+        counter.all_time_unique_visitors = VisitorAnalytics.objects.values('session_id').distinct().count()
+        counter.save()
 
-    total_team = TeamMember.objects.count()
+    all_time_views = counter.all_time_page_views
+    all_time_uniques = counter.all_time_unique_visitors
 
-    total_agents = AIAgent.objects.count()
-    available_agents = AIAgent.objects.filter(available=True).count()
-    unavailable_agents = AIAgent.objects.filter(available=False).count()
+    # 2. Period Visitor Analytics (resets automatically at start of day/week/month)
+    today_views = VisitorAnalytics.objects.filter(timestamp__gte=start_of_day).count()
+    today_uniques = VisitorAnalytics.objects.filter(timestamp__gte=start_of_day, is_unique_visit=True).count()
 
-    total_models = Model3D.objects.count()
-    product_models = Model3D.objects.filter(category='Product').count()
-    mep_models = Model3D.objects.filter(category='MEP').count()
-    structural_models = Model3D.objects.filter(category='Structural').count()
-    processing_models = Model3D.objects.filter(conversion_status='processing').count()
-    ready_models = Model3D.objects.filter(conversion_status='ready').count()
-    failed_models = Model3D.objects.filter(conversion_status='failed').count()
+    week_views = VisitorAnalytics.objects.filter(timestamp__gte=start_of_week).count()
+    week_uniques = VisitorAnalytics.objects.filter(timestamp__gte=start_of_week, is_unique_visit=True).count()
 
-    # Dynamic 7-day traffic trend
+    month_views = VisitorAnalytics.objects.filter(timestamp__gte=start_of_month).count()
+    month_uniques = VisitorAnalytics.objects.filter(timestamp__gte=start_of_month, is_unique_visit=True).count()
+
+    # 3. Dynamic 7-day traffic trend (0 if no visitors yet)
     traffic_trend = []
     for i in range(6, -1, -1):
         day_date = (now - timedelta(days=i)).date()
@@ -94,7 +102,22 @@ def get_latest_dashboard_stats():
             'uniqueVisits': day_unique,
         })
 
-    # Dynamic Top Pages
+    # 4. Inventory Metrics
+    total_team = TeamMember.objects.count()
+
+    total_agents = AIAgent.objects.count()
+    available_agents = AIAgent.objects.filter(available=True).count()
+    unavailable_agents = AIAgent.objects.filter(available=False).count()
+
+    total_models = Model3D.objects.count()
+    product_models = Model3D.objects.filter(category='Product').count()
+    mep_models = Model3D.objects.filter(category='MEP').count()
+    structural_models = Model3D.objects.filter(category='Structural').count()
+    processing_models = Model3D.objects.filter(conversion_status='processing').count()
+    ready_models = Model3D.objects.filter(conversion_status='ready').count()
+    failed_models = Model3D.objects.filter(conversion_status='failed').count()
+
+    # 5. Top Pages
     top_pages_qs = (
         VisitorAnalytics.objects.values('page')
         .annotate(count=Count('id'))
@@ -102,12 +125,33 @@ def get_latest_dashboard_stats():
     )
     top_pages = [{'_id': item['page'], 'count': item['count']} for item in top_pages_qs]
 
+    # MongoDB Sync if connected
+    mongo_db = get_mongo_db()
+    if mongo_db is not None:
+        try:
+            mongo_db['global_analytics'].update_one(
+                {'_id': 'all_time'},
+                {'$set': {
+                    'all_time_page_views': all_time_views,
+                    'all_time_unique_visitors': all_time_uniques,
+                    'last_updated': now.isoformat()
+                }},
+                upsert=True
+            )
+        except Exception:
+            pass
+
     return {
         'visitors': {
-            'total': total_visitors,
-            'today': visitors_today,
-            'week': visitors_week,
-            'month': visitors_month,
+            'allTimeViews': all_time_views,
+            'allTimeUniques': all_time_uniques,
+            'total': all_time_views,
+            'today': today_views,
+            'todayUnique': today_uniques,
+            'week': week_views,
+            'weekUnique': week_uniques,
+            'month': month_views,
+            'monthUnique': month_uniques,
         },
         'team': {'total': total_team},
         'agents': {
@@ -128,3 +172,4 @@ def get_latest_dashboard_stats():
         'trafficTrend': traffic_trend,
         'lastUpdated': now.strftime('%H:%M:%S UTC'),
     }
+

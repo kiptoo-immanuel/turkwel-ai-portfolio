@@ -455,24 +455,34 @@ class VisitorAnalyticsTrackView(APIView):
         referrer = request.data.get('referrer', 'direct')
 
         today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        is_unique = not VisitorAnalytics.objects.filter(session_id=session_id, timestamp__gte=today_start).exists()
+        is_unique_today = not VisitorAnalytics.objects.filter(session_id=session_id, timestamp__gte=today_start).exists()
+        is_all_time_unique = not VisitorAnalytics.objects.filter(session_id=session_id).exists()
 
+        # 1. Update persistent All-Time Counter (NEVER RESETS)
+        from .models import GlobalAnalyticsCounter
+        counter, _ = GlobalAnalyticsCounter.objects.get_or_create(id=1)
+        counter.all_time_page_views += 1
+        if is_all_time_unique:
+            counter.all_time_unique_visitors += 1
+        counter.save()
+
+        # 2. Record period visit log
         VisitorAnalytics.objects.create(
             page=page,
             session_id=session_id,
             referrer=referrer,
-            is_unique_visit=is_unique,
+            is_unique_visit=is_unique_today,
             user_agent=request.META.get('HTTP_USER_AGENT', '')
         )
 
-        # Broadcast live real-time visitor event to connected admin portals
+        # 3. Broadcast live real-time visitor event to connected admin portals
         try:
             latest = get_latest_dashboard_stats()
             broadcaster.broadcast('visitor_update', latest)
-        except Exception as e:
+        except Exception:
             pass
 
-        return Response({'success': True})
+        return Response({'success': True, 'allTimeViews': counter.all_time_page_views})
 
 
 class DashboardStatsView(APIView):
@@ -527,17 +537,17 @@ class VisitorLiveStreamView(APIView):
 
 class AnalyticsResetView(APIView):
     """
-    Resets all pageviews and visitor analytics database records to 0.
-    Broadcasts live reset event to all connected admin portals.
+    Resets period analytics logs (Today/Week/Month).
+    NOTE: All-time cumulative total page views are preserved and NEVER reset.
     """
     permission_classes = [IsAdminAuthorized]
 
     def post(self, request):
         VisitorAnalytics.objects.all().delete()
-        Model3D.objects.all().update(views_count=0)
         latest = get_latest_dashboard_stats()
         try:
             broadcaster.broadcast('visitor_update', latest)
         except Exception:
             pass
-        return Response({'message': 'All pageviews and analytics reset to 0.', 'stats': latest})
+        return Response({'message': 'Period analytics cleared. All-time views preserved.', 'stats': latest})
+

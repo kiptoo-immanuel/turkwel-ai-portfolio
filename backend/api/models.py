@@ -105,3 +105,13 @@ class VisitorAnalytics(models.Model):
 
     def __str__(self):
         return f"{self.page} - {self.session_id} - {self.timestamp}"
+
+
+class GlobalAnalyticsCounter(models.Model):
+    all_time_page_views = models.BigIntegerField(default=0)
+    all_time_unique_visitors = models.BigIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"All-Time Views: {self.all_time_page_views} | Uniques: {self.all_time_unique_visitors}"
+
