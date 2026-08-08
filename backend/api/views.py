@@ -8,13 +8,14 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import datetime, timedelta
 
-from .models import TeamMember, AIAgent, AgentPricing, Model3D, VisitorAnalytics
+from .models import TeamMember, AIAgent, AgentPricing, Model3D, VisitorAnalytics, CaseStudy
 from .serializers import (
     TeamMemberSerializer, AIAgentSerializer, AgentPricingSerializer,
-    Model3DSerializer, VisitorAnalyticsSerializer
+    Model3DSerializer, VisitorAnalyticsSerializer, CaseStudySerializer
 )
 from .converter import process_3d_model_conversion
-from .db_mongo import get_mongo_db
+from .db_mongo import get_mongo_db, sync_team_to_mongo, sync_casestudy_to_mongo
+
 
 
 class IsAdminAuthorized(permissions.BasePermission):
@@ -550,4 +551,123 @@ class AnalyticsResetView(APIView):
         except Exception:
             pass
         return Response({'message': 'Period analytics cleared. All-time views preserved.', 'stats': latest})
+
+
+def seed_initial_metrics_if_empty():
+    if CaseStudy.objects.count() == 0:
+        c1 = CaseStudy.objects.create(
+            title='52-Story High-Rise Thermal Retrofit',
+            category='MEPF AI Agents',
+            description='Deployed autonomous HVAC load-balancing agents across 500+ VAV boxes and dual centrifugal chillers. The agent continuously calculates solar heat gain per facade orientation.',
+            performance_gain='-38.4% Energy Use',
+            benchmark_outcome='$320,000 / year',
+            tags=['BACnet Protocol', 'Niagara Framework', 'Predictive CFD'],
+            icon_name='Flame',
+            color='#F59E0B',
+            is_published=True,
+            order=1
+        )
+        sync_casestudy_to_mongo(c1)
+
+        c2 = CaseStudy.objects.create(
+            title='Generative Aerospace Component Lightweighting',
+            category='Product Development Agents',
+            description='Automated structural finite element stress optimization for titanium bracketry. The agent generated DFM-compliant 5-axis CNC toolpaths with zero tool gouging.',
+            performance_gain='-31.2% Mass Reduction',
+            benchmark_outcome='6 Weeks Speedup',
+            tags=['SolidWorks API', 'Generative Mesh', 'DFM Verified'],
+            icon_name='Cpu',
+            color='#00F2FE',
+            is_published=True,
+            order=2
+        )
+        sync_casestudy_to_mongo(c2)
+
+        c3 = CaseStudy.objects.create(
+            title='Kesses Hospital BIM Clash & Operational Analytics',
+            category='Business Analytics AI Agents',
+            description='Automated complex medical gas & MEP ductwork clash resolution across a 450,000 sq.ft healthcare facility model with live predictive yield analytics.',
+            performance_gain='420 Clashes Fixed',
+            benchmark_outcome='100% Code Compliant',
+            tags=['Revit IFC 4.3', 'ADA / IBC Audited', 'Predictive COBie'],
+            icon_name='BarChart3',
+            color='#38BDF8',
+            is_published=True,
+            order=3
+        )
+        sync_casestudy_to_mongo(c3)
+
+
+class CaseStudyPublicView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        seed_initial_metrics_if_empty()
+        cases = CaseStudy.objects.filter(is_published=True).order_by('order', 'id')
+        serializer = CaseStudySerializer(cases, many=True)
+        return Response(serializer.data)
+
+
+class CaseStudyAdminAllView(APIView):
+    permission_classes = [IsAdminAuthorized]
+
+    def get(self, request):
+        seed_initial_metrics_if_empty()
+        cases = CaseStudy.objects.all().order_by('order', '-id')
+        serializer = CaseStudySerializer(cases, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        data = request.data
+        case = CaseStudy.objects.create(
+            title=data.get('title', 'New Performance Metric'),
+            category=data.get('category', 'MEPF AI Agents'),
+            description=data.get('description', ''),
+            performance_gain=data.get('performanceGain', '-30% Energy'),
+            benchmark_outcome=data.get('benchmarkOutcome', '$200,000 Saved'),
+            tags=[t.strip() for t in data.get('tags', '').split(',') if t.strip()] if isinstance(data.get('tags'), str) else data.get('tags', []),
+            icon_name=data.get('iconName', 'Flame'),
+            color=data.get('color', '#F59E0B'),
+            is_published=str(data.get('isPublished', 'true')).lower() == 'true',
+            order=int(data.get('order', 0))
+        )
+        sync_casestudy_to_mongo(case, action='save')
+        serializer = CaseStudySerializer(case)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class CaseStudyAdminDetailView(APIView):
+    permission_classes = [IsAdminAuthorized]
+
+    def put(self, request, pk):
+        case = CaseStudy.objects.filter(pk=pk).first()
+        if not case:
+            return Response({'message': 'Metric not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        data = request.data
+        if 'title' in data: case.title = data['title']
+        if 'category' in data: case.category = data['category']
+        if 'description' in data: case.description = data['description']
+        if 'performanceGain' in data: case.performance_gain = data['performanceGain']
+        if 'benchmarkOutcome' in data: case.benchmark_outcome = data['benchmarkOutcome']
+        if 'iconName' in data: case.icon_name = data['iconName']
+        if 'color' in data: case.color = data['color']
+        if 'isPublished' in data: case.is_published = str(data['isPublished']).lower() == 'true'
+        if 'order' in data: case.order = int(data['order'])
+        if 'tags' in data:
+            case.tags = [t.strip() for t in data['tags'].split(',') if t.strip()] if isinstance(data['tags'], str) else data['tags']
+
+        case.save()
+        sync_casestudy_to_mongo(case, action='save')
+        serializer = CaseStudySerializer(case)
+        return Response(serializer.data)
+
+    def delete(self, request, pk):
+        case = CaseStudy.objects.filter(pk=pk).first()
+        if case:
+            sync_casestudy_to_mongo(case, action='delete')
+            case.delete()
+            return Response({'message': 'Deleted successfully'})
+        return Response({'message': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+
 

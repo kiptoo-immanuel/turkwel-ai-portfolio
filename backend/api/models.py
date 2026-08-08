@@ -115,3 +115,27 @@ class GlobalAnalyticsCounter(models.Model):
     def __str__(self):
         return f"All-Time Views: {self.all_time_page_views} | Uniques: {self.all_time_unique_visitors}"
 
+
+class CaseStudy(models.Model):
+    CATEGORY_CHOICES = [
+        ('MEPF AI Agents', 'MEPF AI Agents'),
+        ('Product Development Agents', 'Product Development Agents'),
+        ('Business Analytics AI Agents', 'Business Analytics AI Agents'),
+    ]
+
+    title = models.CharField(max_length=255)
+    category = models.CharField(max_length=100, choices=CATEGORY_CHOICES, default='MEPF AI Agents')
+    description = models.TextField()
+    performance_gain = models.CharField(max_length=100, default='-35% Operational Cost')
+    benchmark_outcome = models.CharField(max_length=100, default='$250,000 / year')
+    tags = models.JSONField(default=list, blank=True)
+    icon_name = models.CharField(max_length=50, default='Flame')
+    color = models.CharField(max_length=20, default='#F59E0B')
+    is_published = models.BooleanField(default=True)
+    order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} [{self.category}]"
+
+

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import TeamMember, AIAgent, AgentPricing, Model3D, VisitorAnalytics
+from .models import TeamMember, AIAgent, AgentPricing, Model3D, VisitorAnalytics, CaseStudy
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,7 +32,6 @@ class TeamMemberSerializer(serializers.ModelSerializer):
                 'fileName': obj.profile_pdf_name or 'Profile.pdf'
             }
         return None
-
 
 
 class AgentPricingSerializer(serializers.ModelSerializer):
@@ -112,3 +111,23 @@ class VisitorAnalyticsSerializer(serializers.ModelSerializer):
     class Meta:
         model = VisitorAnalytics
         fields = ['id', 'page', 'session_id', 'referrer', 'is_unique_visit', 'user_agent', 'timestamp']
+
+
+class CaseStudySerializer(serializers.ModelSerializer):
+    _id = serializers.SerializerMethodField()
+    performanceGain = serializers.CharField(source='performance_gain')
+    benchmarkOutcome = serializers.CharField(source='benchmark_outcome')
+    iconName = serializers.CharField(source='icon_name')
+    isPublished = serializers.BooleanField(source='is_published')
+
+    class Meta:
+        model = CaseStudy
+        fields = [
+            'id', '_id', 'title', 'category', 'description',
+            'performanceGain', 'benchmarkOutcome', 'tags',
+            'iconName', 'color', 'isPublished', 'order', 'created_at'
+        ]
+
+    def get__id(self, obj):
+        return str(obj.id)
+

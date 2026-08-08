@@ -4,7 +4,8 @@ from .views import (
     TeamPublicView, TeamAdminAllView, TeamAdminDetailView,
     AgentPublicView, AgentAdminAllView, AgentAdminDetailView, AgentPricingAdminView,
     GalleryPublicView, GalleryPublicViewIncrement, GalleryAdminAllView, GalleryAdminDetailView, GalleryAdminConvertView,
-    VisitorAnalyticsTrackView, DashboardStatsView, VisitorLiveStreamView, AnalyticsResetView
+    VisitorAnalyticsTrackView, DashboardStatsView, VisitorLiveStreamView, AnalyticsResetView,
+    CaseStudyPublicView, CaseStudyAdminAllView, CaseStudyAdminDetailView
 )
 
 urlpatterns = [
@@ -53,13 +54,23 @@ urlpatterns = [
     path('gallery/admin/<int:pk>/convert', GalleryAdminConvertView.as_view(), name='gallery-admin-convert'),
     path('gallery/admin/<int:pk>/convert/', GalleryAdminConvertView.as_view(), name='gallery-admin-convert-slash'),
 
-    # Analytics
-    path('analytics/public/track', VisitorAnalyticsTrackView.as_view(), name='analytics-track'),
-    path('analytics/public/track/', VisitorAnalyticsTrackView.as_view(), name='analytics-track-slash'),
-    path('analytics/admin/dashboard-stats', DashboardStatsView.as_view(), name='analytics-dashboard'),
-    path('analytics/admin/dashboard-stats/', DashboardStatsView.as_view(), name='analytics-dashboard-slash'),
+    # Analytics & Live Stream
+    path('analytics/track', VisitorAnalyticsTrackView.as_view(), name='analytics-track'),
+    path('analytics/track/', VisitorAnalyticsTrackView.as_view(), name='analytics-track-slash'),
+    path('analytics/admin/stats', DashboardStatsView.as_view(), name='analytics-stats'),
+    path('analytics/admin/stats/', DashboardStatsView.as_view(), name='analytics-stats-slash'),
     path('analytics/admin/live-stream', VisitorLiveStreamView.as_view(), name='analytics-live-stream'),
     path('analytics/admin/live-stream/', VisitorLiveStreamView.as_view(), name='analytics-live-stream-slash'),
     path('analytics/admin/reset', AnalyticsResetView.as_view(), name='analytics-reset'),
     path('analytics/admin/reset/', AnalyticsResetView.as_view(), name='analytics-reset-slash'),
+
+    # Proven Performance Metrics / Case Studies
+    path('metrics/public', CaseStudyPublicView.as_view(), name='metrics-public'),
+    path('metrics/public/', CaseStudyPublicView.as_view(), name='metrics-public-slash'),
+    path('metrics/admin/all', CaseStudyAdminAllView.as_view(), name='metrics-admin-all'),
+    path('metrics/admin/all/', CaseStudyAdminAllView.as_view(), name='metrics-admin-all-slash'),
+    path('metrics/admin', CaseStudyAdminAllView.as_view(), name='metrics-admin-create'),
+    path('metrics/admin/', CaseStudyAdminAllView.as_view(), name='metrics-admin-create-slash'),
+    path('metrics/admin/<int:pk>', CaseStudyAdminDetailView.as_view(), name='metrics-admin-detail'),
+    path('metrics/admin/<int:pk>/', CaseStudyAdminDetailView.as_view(), name='metrics-admin-detail-slash'),
 ]

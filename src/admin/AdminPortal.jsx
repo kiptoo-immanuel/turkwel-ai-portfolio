@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Users, Cpu, Box, Activity, LogOut, ArrowLeft, ShieldCheck, Settings, Layers, ChevronRight, Menu, X, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, Users, Cpu, Box, Activity, LogOut, ArrowLeft, ShieldCheck, Settings, Layers, ChevronRight, Menu, X, Sun, Moon, TrendingUp } from 'lucide-react';
 import AdminLogin from './AdminLogin';
 import AdminDashboard from './AdminDashboard';
 import TeamManager from './TeamManager';
 import AgentManager from './AgentManager';
 import GalleryManager from './GalleryManager';
+import MetricsManager from './MetricsManager';
 import AnalyticsManager from './AnalyticsManager';
 import { getApiUrl } from '../config/api';
 
@@ -44,21 +45,20 @@ export default function AdminPortal({ onBackToSite, theme, onToggleTheme }) {
       } else if (res.status === 401) {
         handleLogout();
       } else {
-        // Fallback for static host deployment
         setUser({ name: 'Emmanuel Kiptoo, PE', email: 'admin@bimaxisgroup.com', role: 'admin' });
       }
     } catch (e) {
-      // Preserve user session on static hosts
+      console.error('Auth verify error:', e);
       setUser({ name: 'Emmanuel Kiptoo, PE', email: 'admin@bimaxisgroup.com', role: 'admin' });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLoginSuccess = (userData, userToken) => {
-    localStorage.setItem('admin_token', userToken);
-    setToken(userToken);
-    setUser(userData);
+  const handleLoginSuccess = (userObj, tokenStr) => {
+    setUser(userObj);
+    setToken(tokenStr);
+    localStorage.setItem('admin_token', tokenStr);
   };
 
   const handleLogout = () => {
@@ -76,6 +76,7 @@ export default function AdminPortal({ onBackToSite, theme, onToggleTheme }) {
     { id: 'team', label: 'Team Members', icon: Users },
     { id: 'agents', label: 'AI Agents & Pricing', icon: Cpu },
     { id: 'gallery', label: '3D Model Gallery', icon: Box },
+    { id: 'metrics', label: 'Proven Metrics', icon: TrendingUp },
     { id: 'analytics', label: 'Visitor Analytics', icon: Activity },
   ];
 
@@ -124,8 +125,8 @@ export default function AdminPortal({ onBackToSite, theme, onToggleTheme }) {
                   BIMAXIS<span style={{ color: 'var(--accent-cyan)' }}>Group</span>
                 </span>
               </div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--accent-teal)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
-                Administrator Portal
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
+                Enterprise Admin Portal
               </div>
             </div>
 
@@ -163,37 +164,28 @@ export default function AdminPortal({ onBackToSite, theme, onToggleTheme }) {
                     setActiveTab(item.id);
                     setMobileSidebarOpen(false);
                   }}
-                  className={`admin-nav-item ${isActive ? 'active' : ''}`}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    width: '100%',
-                    padding: '12px 16px',
+                    padding: '12px 14px',
                     borderRadius: '10px',
-                    background: isActive
-                      ? 'linear-gradient(90deg, rgba(56, 189, 248, 0.16), rgba(56, 189, 248, 0.04))'
-                      : 'transparent',
-                    border: `1px solid ${isActive ? 'rgba(56, 189, 248, 0.4)' : 'transparent'}`,
-                    borderLeft: `4px solid ${isActive ? 'var(--accent-cyan)' : 'transparent'}`,
-                    color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    border: isActive ? '1px solid var(--border-glow)' : '1px solid transparent',
+                    background: isActive ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(0, 242, 254, 0.05))' : 'transparent',
+                    color: isActive ? 'var(--accent-cyan)' : 'var(--text-secondary)',
                     fontWeight: isActive ? 700 : 500,
-                    fontSize: '0.9rem',
+                    fontSize: '0.92rem',
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    boxShadow: isActive ? '0 2px 12px rgba(56, 189, 248, 0.15)' : 'none',
+                    transition: 'all 0.2s ease-in-out',
+                    width: '100%',
+                    textAlign: 'left',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <IconComp size={18} color={isActive ? 'var(--accent-cyan)' : 'var(--text-muted)'} />
                     <span>{item.label}</span>
                   </div>
-                  {isActive && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      <span className="admin-pulse-dot-small" />
-                      <ChevronRight size={14} color="var(--accent-cyan)" />
-                    </span>
-                  )}
+                  {isActive && <ChevronRight size={16} color="var(--accent-cyan)" />}
                 </button>
               );
             })}
@@ -204,48 +196,30 @@ export default function AdminPortal({ onBackToSite, theme, onToggleTheme }) {
         <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <button
             onClick={onBackToSite}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              width: '100%',
-              padding: '10px 14px',
-              borderRadius: '8px',
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-subtle)',
-              color: 'var(--text-secondary)',
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
+            className="btn btn-secondary"
+            style={{ width: '100%', justifyContent: 'center', padding: '10px', fontSize: '0.85rem' }}
           >
             <ArrowLeft size={16} />
-            <span>View Public Website</span>
+            <span>Back to Public Website</span>
           </button>
 
           <button
             onClick={handleLogout}
+            className="btn btn-secondary"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
               width: '100%',
-              padding: '10px 14px',
-              borderRadius: '8px',
-              background: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              color: '#F87171',
+              justifyContent: 'center',
+              padding: '10px',
               fontSize: '0.85rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
+              borderColor: 'rgba(239, 68, 68, 0.3)',
+              color: '#F87171',
             }}
           >
             <LogOut size={16} />
-            <span>Log Out Admin Session</span>
+            <span>Sign Out</span>
           </button>
         </div>
+
 
       </aside>
 
@@ -341,6 +315,7 @@ export default function AdminPortal({ onBackToSite, theme, onToggleTheme }) {
           {activeTab === 'team' && <TeamManager token={token} />}
           {activeTab === 'agents' && <AgentManager token={token} />}
           {activeTab === 'gallery' && <GalleryManager token={token} />}
+          {activeTab === 'metrics' && <MetricsManager token={token} />}
           {activeTab === 'analytics' && <AnalyticsManager token={token} />}
         </main>
 

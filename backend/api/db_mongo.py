@@ -61,3 +61,35 @@ def sync_team_to_mongo(member, action='save'):
     except Exception as e:
         print(f"[MongoDB Sync Warning] Team member sync error: {e}")
 
+
+def sync_casestudy_to_mongo(case, action='save'):
+    """
+    Syncs Django CaseStudy ORM model instance directly to MongoDB 'performance_metrics' collection.
+    """
+    db = get_mongo_db()
+    if db is None:
+        return
+    try:
+        col = db['performance_metrics']
+        case_id = case.id if hasattr(case, 'id') else case
+        if action == 'delete':
+            col.delete_one({'django_id': case_id})
+        else:
+            doc = {
+                'django_id': case.id,
+                'title': case.title,
+                'category': case.category,
+                'description': case.description,
+                'performance_gain': case.performance_gain,
+                'benchmark_outcome': case.benchmark_outcome,
+                'tags': case.tags,
+                'icon_name': case.icon_name,
+                'color': case.color,
+                'is_published': case.is_published,
+                'order': case.order,
+            }
+            col.update_one({'django_id': case.id}, {'$set': doc}, upsert=True)
+    except Exception as e:
+        print(f"[MongoDB Sync Warning] CaseStudy sync error: {e}")
+
+
