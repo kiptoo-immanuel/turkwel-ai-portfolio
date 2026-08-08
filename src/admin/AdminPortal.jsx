@@ -79,10 +79,12 @@ export default function AdminPortal({ onBackToSite, theme, onToggleTheme }) {
     { id: 'analytics', label: 'Visitor Analytics', icon: Activity },
   ];
 
+  const currentTab = navItems.find((i) => i.id === activeTab);
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-dark)', color: 'var(--text-primary)', display: 'flex', position: 'relative' }}>
       
-      {/* Mobile Sidebar Overlay */}
+      {/* Mobile Sidebar Backdrop Overlay */}
       {mobileSidebarOpen && (
         <div
           onClick={() => setMobileSidebarOpen(false)}
@@ -90,6 +92,7 @@ export default function AdminPortal({ onBackToSite, theme, onToggleTheme }) {
             position: 'fixed',
             inset: 0,
             background: 'var(--bg-modal-overlay)',
+            backdropFilter: 'blur(4px)',
             zIndex: 140,
           }}
         />
@@ -108,12 +111,12 @@ export default function AdminPortal({ onBackToSite, theme, onToggleTheme }) {
           justifyContent: 'space-between',
           flexShrink: 0,
           zIndex: 150,
-          transition: 'transform 0.3s ease',
+          transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
         <div>
           {/* Brand Header */}
-          <div style={{ padding: '0 12px 24px', borderBottom: '1px solid var(--border-subtle)', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ padding: '0 8px 20px', borderBottom: '1px solid var(--border-subtle)', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
                 <ShieldCheck size={24} color="var(--accent-cyan)" />
@@ -129,9 +132,22 @@ export default function AdminPortal({ onBackToSite, theme, onToggleTheme }) {
             <button
               onClick={() => setMobileSidebarOpen(false)}
               className="mobile-close-btn"
-              style={{ display: 'none', background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}
+              aria-label="Close Admin Sidebar"
+              style={{
+                display: 'none',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '8px',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+                padding: '6px',
+                width: '34px',
+                height: '34px',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
-              <X size={22} />
+              <X size={18} />
             </button>
           </div>
 
@@ -147,6 +163,7 @@ export default function AdminPortal({ onBackToSite, theme, onToggleTheme }) {
                     setActiveTab(item.id);
                     setMobileSidebarOpen(false);
                   }}
+                  className={`admin-nav-item ${isActive ? 'active' : ''}`}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -154,20 +171,29 @@ export default function AdminPortal({ onBackToSite, theme, onToggleTheme }) {
                     width: '100%',
                     padding: '12px 16px',
                     borderRadius: '10px',
-                    background: isActive ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
-                    border: `1px solid ${isActive ? 'var(--accent-cyan)' : 'transparent'}`,
+                    background: isActive
+                      ? 'linear-gradient(90deg, rgba(56, 189, 248, 0.16), rgba(56, 189, 248, 0.04))'
+                      : 'transparent',
+                    border: `1px solid ${isActive ? 'rgba(56, 189, 248, 0.4)' : 'transparent'}`,
+                    borderLeft: `4px solid ${isActive ? 'var(--accent-cyan)' : 'transparent'}`,
                     color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
                     fontWeight: isActive ? 700 : 500,
                     fontSize: '0.9rem',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
+                    boxShadow: isActive ? '0 2px 12px rgba(56, 189, 248, 0.15)' : 'none',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <IconComp size={18} color={isActive ? 'var(--accent-cyan)' : 'var(--text-muted)'} />
                     <span>{item.label}</span>
                   </div>
-                  {isActive && <ChevronRight size={14} color="var(--accent-cyan)" />}
+                  {isActive && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <span className="admin-pulse-dot-small" />
+                      <ChevronRight size={14} color="var(--accent-cyan)" />
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -189,7 +215,9 @@ export default function AdminPortal({ onBackToSite, theme, onToggleTheme }) {
               border: '1px solid var(--border-subtle)',
               color: 'var(--text-secondary)',
               fontSize: '0.85rem',
+              fontWeight: 500,
               cursor: 'pointer',
+              transition: 'all 0.2s ease',
             }}
           >
             <ArrowLeft size={16} />
@@ -209,7 +237,9 @@ export default function AdminPortal({ onBackToSite, theme, onToggleTheme }) {
               border: '1px solid rgba(239, 68, 68, 0.3)',
               color: '#F87171',
               fontSize: '0.85rem',
+              fontWeight: 600,
               cursor: 'pointer',
+              transition: 'all 0.2s ease',
             }}
           >
             <LogOut size={16} />
@@ -225,7 +255,7 @@ export default function AdminPortal({ onBackToSite, theme, onToggleTheme }) {
         {/* Top App Bar */}
         <header
           style={{
-            padding: '14px 24px',
+            padding: '12px 20px',
             borderBottom: '1px solid var(--border-subtle)',
             background: 'var(--bg-panel-solid)',
             display: 'flex',
@@ -234,46 +264,79 @@ export default function AdminPortal({ onBackToSite, theme, onToggleTheme }) {
             gap: '12px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
             <button
               onClick={() => setMobileSidebarOpen(true)}
               className="admin-hamburger"
+              aria-label="Open Navigation Drawer"
               style={{
                 display: 'none',
-                background: 'none',
-                border: 'none',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '8px',
                 color: 'var(--text-primary)',
                 cursor: 'pointer',
-                padding: '4px',
+                padding: '6px',
+                width: '38px',
+                height: '38px',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
               }}
             >
-              <Menu size={24} />
+              <Menu size={20} />
             </button>
 
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Session Active: <strong style={{ color: 'var(--text-primary)' }}>{user.email}</strong>
+            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+              <div style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 700, lineHeight: 1.2, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentTab?.label || 'Dashboard'}</span>
+              </div>
+              <div className="admin-session-email" style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                {user.email}
+              </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
             {/* Theme Switcher Button */}
             <button
               onClick={onToggleTheme}
               className="theme-toggle-btn"
               title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               aria-label="Toggle Light and Dark Mode"
+              style={{ width: '34px', height: '34px', borderRadius: '8px', flexShrink: 0 }}
             >
-              {theme === 'dark' ? <Sun size={20} color="var(--accent-amber)" /> : <Moon size={20} color="var(--accent-purple)" />}
+              {theme === 'dark' ? <Sun size={16} color="var(--accent-amber)" /> : <Moon size={16} color="var(--accent-purple)" />}
             </button>
 
-            <span className="tag-badge tag-emerald" style={{ fontSize: '0.7rem' }}>
-              ● Admin Active
+            {/* Responsive Active Admin Badge */}
+            <span className="admin-status-badge" title="Admin Session Active">
+              <span className="admin-pulse-dot" />
+              <span className="admin-status-text">Admin Active</span>
             </span>
           </div>
         </header>
 
+        {/* Mobile Horizontal Quick Tab Bar */}
+        <div className="mobile-admin-tabs">
+          {navItems.map((item) => {
+            const IconComp = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`mobile-tab-btn ${isActive ? 'active' : ''}`}
+              >
+                <IconComp size={14} color={isActive ? 'var(--accent-cyan)' : 'var(--text-muted)'} />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
         {/* Tab Body */}
-        <main style={{ padding: '24px', flex: 1 }}>
+        <main className="admin-main-content" style={{ padding: '24px', flex: 1 }}>
           {activeTab === 'dashboard' && <AdminDashboard token={token} onNavigate={setActiveTab} />}
           {activeTab === 'team' && <TeamManager token={token} />}
           {activeTab === 'agents' && <AgentManager token={token} />}
@@ -284,23 +347,119 @@ export default function AdminPortal({ onBackToSite, theme, onToggleTheme }) {
       </div>
 
       <style>{`
+        .admin-status-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 4px 10px;
+          border-radius: 20px;
+          background: rgba(16, 185, 129, 0.12);
+          border: 1px solid rgba(16, 185, 129, 0.3);
+          color: #10B981;
+          font-size: 0.74rem;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+        .admin-pulse-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #10B981;
+          box-shadow: 0 0 8px #10B981;
+          animation: adminPulse 1.8s infinite;
+          flex-shrink: 0;
+        }
+        .admin-pulse-dot-small {
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background: var(--accent-cyan);
+          box-shadow: 0 0 6px var(--accent-cyan);
+          animation: adminPulse 1.8s infinite;
+        }
+        @keyframes adminPulse {
+          0% { transform: scale(0.95); opacity: 0.8; }
+          50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 10px #10B981; }
+          100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .mobile-admin-tabs {
+          display: none;
+        }
+
         @media (max-width: 768px) {
           .admin-sidebar {
             position: fixed;
             top: 0;
             bottom: 0;
             left: 0;
+            width: 280px !important;
+            max-width: 85vw !important;
             transform: translateX(-100%);
-            box-shadow: var(--glass-shadow);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+            z-index: 200 !important;
           }
           .admin-sidebar.mobile-open {
             transform: translateX(0);
           }
           .admin-hamburger {
-            display: block !important;
+            display: flex !important;
           }
           .mobile-close-btn {
-            display: block !important;
+            display: flex !important;
+          }
+          .mobile-admin-tabs {
+            display: flex !important;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 8px 12px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-subtle);
+            gap: 8px;
+            scrollbar-width: none;
+          }
+          .mobile-admin-tabs::-webkit-scrollbar {
+            display: none;
+          }
+          .mobile-tab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+          }
+          .mobile-tab-btn.active {
+            background: rgba(56, 189, 248, 0.15);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+          }
+        }
+        @media (max-width: 640px) {
+          .admin-main-content {
+            padding: 14px 12px !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .admin-status-text {
+            display: none;
+          }
+          .admin-status-badge {
+            padding: 6px;
+            border-radius: 50%;
+          }
+          .admin-session-email {
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
           }
         }
       `}</style>
