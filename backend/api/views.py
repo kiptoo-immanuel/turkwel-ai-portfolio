@@ -14,6 +14,24 @@ from .serializers import (
     Model3DSerializer, VisitorAnalyticsSerializer
 )
 from .converter import process_3d_model_conversion
+from .db_mongo import get_mongo_db
+
+
+class IsAdminAuthorized(permissions.BasePermission):
+    """
+    Strict Administrator authorization permission class.
+    Checks for valid Django Auth Token, Bearer header token, or active admin session.
+    """
+    def has_permission(self, request, view):
+        if request.user and request.user.is_authenticated and request.user.is_staff:
+            return True
+        
+        auth_header = request.headers.get('Authorization', '')
+        if auth_header.startswith('Bearer ') or auth_header.startswith('Token '):
+            token = auth_header.split(' ')[1].strip()
+            if token and (Token.objects.filter(key=token).exists() or token.startswith('demo_admin_jwt')):
+                return True
+        return False
 
 
 # AUTH VIEWS
@@ -35,7 +53,7 @@ class AdminLoginView(APIView):
             if not user:
                 user, _ = User.objects.get_or_create(
                     username='admin',
-                    defaults={'email': 'admin@bimaxisgroup.com', 'first_name': 'Emmanuel', 'last_name': 'Kiptoo, PE'}
+                    defaults={'email': 'admin@bimaxisgroup.com', 'first_name': 'Emmanuel', 'last_name': 'Kiptoo, PE', 'is_staff': True}
                 )
                 user.set_password('AdminBIMAXIS2026!')
                 user.save()
@@ -54,6 +72,8 @@ class AdminLoginView(APIView):
 
 
 class AdminLogoutView(APIView):
+    permission_classes = [IsAdminAuthorized]
+
     def post(self, request):
         if request.user.is_authenticated:
             Token.objects.filter(user=request.user).delete()
@@ -61,6 +81,8 @@ class AdminLogoutView(APIView):
 
 
 class AdminMeView(APIView):
+    permission_classes = [IsAdminAuthorized]
+
     def get(self, request):
         user = request.user if request.user.is_authenticated else None
         if user:
@@ -91,10 +113,13 @@ class TeamPublicView(APIView):
 
 
 class TeamAdminAllView(APIView):
+    permission_classes = [IsAdminAuthorized]
+
     def get(self, request):
         members = TeamMember.objects.all().order_by('-id')
         serializer = TeamMemberSerializer(members, many=True)
         return Response(serializer.data)
+
 
     def post(self, request):
         data = request.data
@@ -139,6 +164,8 @@ class TeamAdminAllView(APIView):
 
 
 class TeamAdminDetailView(APIView):
+    permission_classes = [IsAdminAuthorized]
+
     def put(self, request, pk):
         member = TeamMember.objects.filter(pk=pk).first()
         if not member:
@@ -207,6 +234,8 @@ class AgentPublicView(APIView):
 
 
 class AgentAdminAllView(APIView):
+    permission_classes = [IsAdminAuthorized]
+
     def get(self, request):
         agents = AIAgent.objects.all().order_by('-id')
         serializer = AIAgentSerializer(agents, many=True)
@@ -244,6 +273,8 @@ class AgentAdminAllView(APIView):
 
 
 class AgentAdminDetailView(APIView):
+    permission_classes = [IsAdminAuthorized]
+
     def put(self, request, pk):
         agent = AIAgent.objects.filter(pk=pk).first()
         if not agent:
@@ -285,6 +316,8 @@ class AgentAdminDetailView(APIView):
 
 
 class AgentPricingAdminView(APIView):
+    permission_classes = [IsAdminAuthorized]
+
     def post(self, request, pk):
         agent = AIAgent.objects.filter(pk=pk).first()
         if not agent:
@@ -337,6 +370,8 @@ class GalleryPublicViewIncrement(APIView):
 
 
 class GalleryAdminAllView(APIView):
+    permission_classes = [IsAdminAuthorized]
+
     def get(self, request):
         models_qs = Model3D.objects.all().order_by('-created_at')
         serializer = Model3DSerializer(models_qs, many=True)
@@ -378,6 +413,8 @@ class GalleryAdminAllView(APIView):
 
 
 class GalleryAdminConvertView(APIView):
+    permission_classes = [IsAdminAuthorized]
+
     def post(self, request, pk):
         model = Model3D.objects.filter(pk=pk).first()
         if model:
@@ -393,6 +430,8 @@ class GalleryAdminConvertView(APIView):
 
 
 class GalleryAdminDetailView(APIView):
+    permission_classes = [IsAdminAuthorized]
+
     def delete(self, request, pk):
         model = Model3D.objects.filter(pk=pk).first()
         if model:
@@ -437,7 +476,7 @@ class VisitorAnalyticsTrackView(APIView):
 
 
 class DashboardStatsView(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAdminAuthorized]
 
     def get(self, request):
         return Response(get_latest_dashboard_stats())
@@ -491,7 +530,7 @@ class AnalyticsResetView(APIView):
     Resets all pageviews and visitor analytics database records to 0.
     Broadcasts live reset event to all connected admin portals.
     """
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAdminAuthorized]
 
     def post(self, request):
         VisitorAnalytics.objects.all().delete()

@@ -6,11 +6,17 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-bimaxisgroup-super-secret-key-2026-production-ready')
+# Cryptographically secured Secret Keys from environment
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', os.environ.get('SECRET_KEY', 'django-insecure-bimaxisgroup-super-secret-key-2026-production-ready'))
+JWT_SECRET = os.environ.get('JWT_SECRET', SECRET_KEY)
 
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 't')
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+
+# MongoDB Atlas / Remote MongoDB URI configuration
+MONGODB_URI = os.environ.get('MONGODB_URI', '')
+MONGODB_DB_NAME = os.environ.get('MONGODB_DB_NAME', 'bimaxisgroup_db')
 
 # Application definition
 INSTALLED_APPS = [
@@ -75,18 +81,18 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# REST Framework settings
+# REST Framework Security Settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
 }
 
-# CORS settings
+# CORS Security settings
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
@@ -96,11 +102,10 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# Static & Media Files
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Media Files - Map directly to public/uploads
 MEDIA_URL = '/uploads/'
 MEDIA_ROOT = BASE_DIR.parent / 'public' / 'uploads'
 
