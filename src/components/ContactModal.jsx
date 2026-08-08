@@ -117,7 +117,7 @@ export default function ContactModal({ isOpen, onClose }) {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
               <Sparkles size={20} color="var(--accent-cyan)" />
-              <span className="tag-badge">Engineering AI Consultation</span>
+              <span className="tag-badge">ENGINEERING AI Consultant</span>
             </div>
 
             <h3 style={{ fontSize: '1.8rem', marginBottom: '8px' }}>Request AI Agent Proposal</h3>
