@@ -27,3 +27,37 @@ def get_mongo_db():
     except Exception as e:
         print(f"[MongoDB Connection Warning] Could not connect to MongoDB URI: {e}")
         return None
+
+
+def sync_team_to_mongo(member, action='save'):
+    """
+    Syncs Django TeamMember ORM model instance directly to MongoDB 'team_members' collection.
+    """
+    db = get_mongo_db()
+    if db is None:
+        return
+    try:
+        col = db['team_members']
+        if action == 'delete':
+            col.delete_one({'django_id': member.id if hasattr(member, 'id') else member})
+        else:
+            doc = {
+                'django_id': member.id,
+                'name': member.name,
+                'position': member.position,
+                'biography': member.biography,
+                'email': member.email,
+                'phone': member.phone,
+                'linkedin': member.linkedin,
+                'website': member.website,
+                'profile_image': member.profile_image,
+                'profile_pdf': member.profile_pdf,
+                'profile_pdf_name': member.profile_pdf_name,
+                'skills': member.skills,
+                'qualifications': member.qualifications,
+                'is_published': member.is_published,
+            }
+            col.update_one({'django_id': member.id}, {'$set': doc}, upsert=True)
+    except Exception as e:
+        print(f"[MongoDB Sync Warning] Team member sync error: {e}")
+

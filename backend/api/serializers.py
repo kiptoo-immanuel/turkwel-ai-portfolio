@@ -9,6 +9,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class TeamMemberSerializer(serializers.ModelSerializer):
+    _id = serializers.SerializerMethodField()
     profilePdf = serializers.SerializerMethodField()
     profileImage = serializers.CharField(source='profile_image', required=False)
     isPublished = serializers.BooleanField(source='is_published', required=False)
@@ -16,10 +17,13 @@ class TeamMemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeamMember
         fields = [
-            'id', 'name', 'position', 'biography', 'email', 'phone',
+            'id', '_id', 'name', 'position', 'biography', 'email', 'phone',
             'linkedin', 'website', 'profileImage', 'profilePdf',
             'skills', 'qualifications', 'isPublished', 'created_at'
         ]
+
+    def get__id(self, obj):
+        return str(obj.id)
 
     def get_profilePdf(self, obj):
         if obj.profile_pdf:
@@ -28,6 +32,7 @@ class TeamMemberSerializer(serializers.ModelSerializer):
                 'fileName': obj.profile_pdf_name or 'Profile.pdf'
             }
         return None
+
 
 
 class AgentPricingSerializer(serializers.ModelSerializer):
